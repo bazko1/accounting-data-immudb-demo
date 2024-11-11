@@ -39,7 +39,7 @@ func (am AccountManager) CreateEntry(acc Account) error {
 		return errors.Wrap(err, "failed to marshal account")
 	}
 
-	response, err := am.client.DoPutRequest(fmt.Sprintf("/ledger/%s/collection/%s/documents",
+	response, err := am.client.DoPutRequest(fmt.Sprintf("/ledger/%s/collection/%s/document",
 		am.Ledger,
 		am.Collection),
 		bytes.NewBuffer(jsonBytes))

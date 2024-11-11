@@ -35,11 +35,33 @@ func NewImmuDBClient(config ImmuDBClientConfig) ImmuDBClient {
 	}
 }
 
-func (c ImmuDBClient) DoPutRequest(endpoint string, body io.Reader) (*http.Response, error) {
-	url := c.baseURL + "ledger/default/collection/default/document"
+func (c ImmuDBClient) DoPutRequest(endpoint string,
+	body io.Reader,
+) (*http.Response, error) {
+	return c.DoRequest(http.MethodPut, endpoint, body)
+}
+
+func (c ImmuDBClient) DoPostRequest(endpoint string,
+	body io.Reader,
+) (*http.Response, error) {
+	return c.DoRequest(http.MethodPost, endpoint, body)
+}
+
+func (c ImmuDBClient) DoGetRequest(endpoint string,
+	body io.Reader,
+) (*http.Response, error) {
+	return c.DoRequest(http.MethodGet, endpoint, body)
+}
+
+func (c ImmuDBClient) DoRequest(method string,
+	endpoint string,
+	body io.Reader) (*http.Response,
+	error,
+) {
+	url := c.baseURL + endpoint
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, body)
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create new request with context")
 	}
