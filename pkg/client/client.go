@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
+	"accounting-immudb-demo/pkg/logger"
+
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 const (
@@ -58,10 +62,15 @@ func (c ImmuDBClient) DoRequest(method string,
 	body io.Reader) (*http.Response,
 	error,
 ) {
-	url := c.baseURL + endpoint
+	path, err := url.JoinPath(c.baseURL, endpoint)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create url path %q", path)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, method, url, body)
+	logger.Debug("DoRequest", zap.String("method", method), zap.String("url", path))
+	req, err := http.NewRequestWithContext(ctx, method, path, body)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create new request with context")
 	}
@@ -79,15 +88,9 @@ func (c ImmuDBClient) DoRequest(method string,
 func CheckResponse(resp *http.Response) error {
 	if resp.StatusCode != 200 {
 		b, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("Got %d status code instead of 200. \nResponse Details: %v",
+		return fmt.Errorf("Got %d status code instead of 200.\nResponse body: %v",
 			resp.StatusCode,
 			string(b))
 	}
 	return nil
-}
-
-// Create document response
-type CreateDocumentSuccessResponse struct {
-	TransactionID string `json:"transactionId,omitempty"`
-	DocumentID    string `json:"documentId,omitempty"`
 }

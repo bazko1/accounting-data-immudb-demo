@@ -7,8 +7,10 @@ import (
 	"io"
 
 	"accounting-immudb-demo/pkg/client"
+	"accounting-immudb-demo/pkg/logger"
 
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 // account data manager based on immudb
@@ -17,6 +19,7 @@ type AccountManager struct {
 	Collection string
 	token      string
 	client     client.ImmuDBClient
+	logger     *zap.Logger
 }
 
 func NewAccountManager(ledger, collection, token string) AccountManager {
@@ -29,8 +32,50 @@ func NewAccountManager(ledger, collection, token string) AccountManager {
 				Token: token,
 			}),
 	}
-	// TODO: Check if given db with ledger/collection is already created
-	// and if not create
+}
+
+// CreateAccountCollection creates new account collection if it does not exist
+func (am AccountManager) CreateAccountCollection() error {
+	names, err := am.client.ListCollectionsName(am.Ledger)
+	if err != nil {
+		return errors.Wrap(err, "failed to list collections")
+	}
+
+	for _, name := range names {
+		if name == am.Collection {
+			logger.Debug("CreateAccountCollection",
+				zap.String("collection", am.Collection),
+				zap.String("status", "found"))
+			return nil
+		}
+	}
+
+	// TODO: In the future add force flag that deletes / recreates collection
+
+	jsonBytes, err := json.Marshal(map[string]any{
+		"idFieldName": "number",
+	})
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal account")
+	}
+	response, err := am.client.DoPutRequest(fmt.Sprintf("/ledger/%s/collection/%s",
+		am.Ledger,
+		am.Collection),
+		bytes.NewBuffer(jsonBytes))
+	if err != nil {
+		return errors.Wrapf(err, "failed to create collection for accounts sending PUT request")
+	}
+	defer response.Body.Close()
+	if err := client.CheckResponse(response); err != nil {
+		return errors.Wrap(err, "failed to create accounts collection")
+	}
+
+	logger.Debug("CreateAccountCollection",
+		zap.String("collection", am.Collection),
+		zap.String("ledger", am.Ledger),
+		zap.String("status", "created"))
+
+	return nil
 }
 
 func (am AccountManager) CreateEntry(acc Account) error {
@@ -50,8 +95,12 @@ func (am AccountManager) CreateEntry(acc Account) error {
 	if err := client.CheckResponse(response); err != nil {
 		return errors.Wrap(err, "failed to create new entry")
 	}
-	b, _ := io.ReadAll(response.Body)
-	fmt.Println(string(b))
+
+	b, err := io.ReadAll(response.Body)
+	if err != nil {
+		logger.Debug("entry created", zap.String("respBody", string(b)))
+	}
+
 	return nil
 }
 
