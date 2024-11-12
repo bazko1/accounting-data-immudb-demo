@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"os"
 
 	"accounting-immudb-demo/pkg/account"
@@ -14,16 +16,16 @@ func main() {
 
 	// there is some sort of protection that does not allows me to create entries in collection
 	// that is not named default
-	manger := account.NewAccountManager("default", "default", token)
+	manager := account.NewAccountManager("default", "default", token)
 
-	err := manger.CreateAccountCollection()
+	err := manager.CreateAccountCollection()
 	if err != nil {
 		logger.Info("main create", zap.String("error", err.Error()))
 		return
 	}
 
-	err = manger.CreateEntry(account.Account{
-		Number:  1,
+	err = manager.CreateAccount(account.Account{
+		Number:  2,
 		Name:    "Foo Bar",
 		Iban:    "FOO12",
 		Address: "Foo street 10",
@@ -32,6 +34,9 @@ func main() {
 	})
 	if err != nil {
 		logger.Info("main", zap.String("error", err.Error()))
-		return
+		fmt.Println(errors.Is(err, account.ErrAccountAlreadyExists))
+		// return
 	}
+	ac, err := manager.GetAccounts()
+	fmt.Println("get accounts", ac, err)
 }

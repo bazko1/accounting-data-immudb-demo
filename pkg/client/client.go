@@ -70,7 +70,10 @@ func (c ImmuDBClient) DoRequest(method string,
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
 	logger.Debug("DoRequest", zap.String("method", method), zap.String("url", path))
-	req, err := http.NewRequestWithContext(ctx, method, path, body)
+	req, err := http.NewRequestWithContext(ctx,
+		method,
+		path,
+		body)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create new request with context")
 	}
@@ -86,8 +89,17 @@ func (c ImmuDBClient) DoRequest(method string,
 }
 
 func CheckResponse(resp *http.Response) error {
-	if resp.StatusCode != 200 {
-		b, _ := io.ReadAll(resp.Body)
+	switch resp.StatusCode {
+	case 200:
+	case 409:
+		return HTTPConflictResponseErr
+	default:
+		b, err := io.ReadAll(resp.Body)
+		if err != nil {
+			logger.Error("CheckResponse failed to read response body",
+				zap.Error(err))
+		}
+
 		return fmt.Errorf("Got %d status code instead of 200.\nResponse body: %v",
 			resp.StatusCode,
 			string(b))
