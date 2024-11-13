@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"accounting-immudb-demo/pkg/account"
 	"accounting-immudb-demo/pkg/logger"
@@ -18,13 +20,17 @@ func main() {
 	// that is not named default
 	manager := account.NewAccountManager("default", "default", token)
 
-	err := manager.CreateAccountCollection()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	err := manager.CreateAccountCollection(ctx)
 	if err != nil {
 		logger.Info("main create", zap.String("error", err.Error()))
 		return
 	}
 
-	err = manager.CreateAccount(account.Account{
+	ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	err = manager.CreateAccount(ctx, account.Account{
 		Number:  2,
 		Name:    "Foo Bar",
 		Iban:    "FOO12",
@@ -37,6 +43,9 @@ func main() {
 		fmt.Println(errors.Is(err, account.ErrAccountAlreadyExists))
 		// return
 	}
-	ac, err := manager.GetAccounts()
+
+	ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	ac, err := manager.GetAccounts(ctx)
 	fmt.Println("get accounts", ac, err)
 }

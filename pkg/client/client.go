@@ -39,25 +39,29 @@ func NewImmuDBClient(config ImmuDBClientConfig) ImmuDBClient {
 	}
 }
 
-func (c ImmuDBClient) DoPutRequest(endpoint string,
+func (c ImmuDBClient) DoPutRequest(ctx context.Context,
+	endpoint string,
 	body io.Reader,
 ) (*http.Response, error) {
-	return c.DoRequest(http.MethodPut, endpoint, body)
+	return c.DoRequest(ctx, http.MethodPut, endpoint, body)
 }
 
-func (c ImmuDBClient) DoPostRequest(endpoint string,
+func (c ImmuDBClient) DoPostRequest(ctx context.Context,
+	endpoint string,
 	body io.Reader,
 ) (*http.Response, error) {
-	return c.DoRequest(http.MethodPost, endpoint, body)
+	return c.DoRequest(ctx, http.MethodPost, endpoint, body)
 }
 
-func (c ImmuDBClient) DoGetRequest(endpoint string,
+func (c ImmuDBClient) DoGetRequest(ctx context.Context,
+	endpoint string,
 	body io.Reader,
 ) (*http.Response, error) {
-	return c.DoRequest(http.MethodGet, endpoint, body)
+	return c.DoRequest(ctx, http.MethodGet, endpoint, body)
 }
 
-func (c ImmuDBClient) DoRequest(method string,
+func (c ImmuDBClient) DoRequest(ctx context.Context,
+	method string,
 	endpoint string,
 	body io.Reader) (*http.Response,
 	error,
@@ -67,8 +71,6 @@ func (c ImmuDBClient) DoRequest(method string,
 		return nil, errors.Wrapf(err, "failed to create url path %q", path)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
 	logger.Debug("DoRequest", zap.String("method", method), zap.String("url", path))
 	req, err := http.NewRequestWithContext(ctx,
 		method,

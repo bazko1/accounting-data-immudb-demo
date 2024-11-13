@@ -4,7 +4,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var logger, _ = zap.NewDevelopment()
+var logger, _ = zap.NewProduction()
 
 func Debug(msg string, fields ...zap.Field) {
 	logger.Debug(msg, fields...)

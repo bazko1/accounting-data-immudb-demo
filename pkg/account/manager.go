@@ -2,6 +2,7 @@ package account
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -36,7 +37,7 @@ func NewAccountManager(ledger, collection, token string) AccountManager {
 }
 
 // CreateAccountCollection creates new account collection if it does not exist
-func (am AccountManager) CreateAccountCollection() error {
+func (am AccountManager) CreateAccountCollection(ctx context.Context) error {
 	names, err := am.client.ListCollectionsName(am.Ledger)
 	if err != nil {
 		return errors.Wrap(err, "failed to list collections")
@@ -72,7 +73,7 @@ func (am AccountManager) CreateAccountCollection() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal account")
 	}
-	response, err := am.client.DoPutRequest(fmt.Sprintf("/ledger/%s/collection/%s",
+	response, err := am.client.DoPutRequest(ctx, fmt.Sprintf("/ledger/%s/collection/%s",
 		am.Ledger,
 		am.Collection),
 		bytes.NewBuffer(jsonBytes))
@@ -92,13 +93,13 @@ func (am AccountManager) CreateAccountCollection() error {
 	return nil
 }
 
-func (am AccountManager) CreateAccount(acc Account) error {
+func (am AccountManager) CreateAccount(ctx context.Context, acc Account) error {
 	jsonBytes, err := json.Marshal(acc)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal account")
 	}
 
-	response, err := am.client.DoPutRequest(fmt.Sprintf("/ledger/%s/collection/%s/document",
+	response, err := am.client.DoPutRequest(ctx, fmt.Sprintf("/ledger/%s/collection/%s/document",
 		am.Ledger,
 		am.Collection),
 		bytes.NewBuffer(jsonBytes))
@@ -142,7 +143,7 @@ func (am AccountManager) CreateAccount(acc Account) error {
 	return nil
 }
 
-func (am AccountManager) GetAccounts() ([]Account, error) {
+func (am AccountManager) GetAccounts(ctx context.Context) ([]Account, error) {
 	count, err := am.client.GetCollectionCount(am.Ledger, am.Collection)
 	if err != nil {
 		return nil, errors.Wrap(err, "get accounts failed to list collection")
@@ -172,7 +173,7 @@ func (am AccountManager) GetAccounts() ([]Account, error) {
 		return nil, errors.Wrap(err, "GetAccounts failed to marshal search schema")
 	}
 
-	response, err := am.client.DoPostRequest(fmt.Sprintf("/ledger/%s/collection/%s/documents/search",
+	response, err := am.client.DoPostRequest(ctx, fmt.Sprintf("/ledger/%s/collection/%s/documents/search",
 		am.Ledger,
 		am.Collection),
 		bytes.NewBuffer(jsonBytes))

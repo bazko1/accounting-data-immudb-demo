@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,7 +13,9 @@ import (
 var HTTPConflictResponseErr = errors.New("409 HTTP Conflict response")
 
 func (c ImmuDBClient) ListCollectionsName(ledger string) ([]string, error) {
-	resp, err := c.DoGetRequest(fmt.Sprintf("/ledger/%s/collections",
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+	resp, err := c.DoGetRequest(ctx, fmt.Sprintf("/ledger/%s/collections",
 		ledger),
 		nil)
 	if err != nil {
@@ -43,7 +46,9 @@ func (c ImmuDBClient) ListCollectionsName(ledger string) ([]string, error) {
 }
 
 func (c ImmuDBClient) GetCollectionCount(ledger, collection string) (int, error) {
-	response, err := c.DoPostRequest(fmt.Sprintf("/ledger/%s/collection/%s/documents/count",
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+	response, err := c.DoPostRequest(ctx, fmt.Sprintf("/ledger/%s/collection/%s/documents/count",
 		ledger,
 		collection),
 		strings.NewReader("{}"))
