@@ -12,9 +12,7 @@ import (
 
 var HTTPConflictResponseErr = errors.New("409 HTTP Conflict response")
 
-func (c ImmuDBClient) ListCollectionsName(ledger string) ([]string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
+func (c ImmuDBClient) ListCollectionsName(ctx context.Context, ledger string) ([]string, error) {
 	resp, err := c.DoGetRequest(ctx, fmt.Sprintf("/ledger/%s/collections",
 		ledger),
 		nil)
@@ -45,9 +43,7 @@ func (c ImmuDBClient) ListCollectionsName(ledger string) ([]string, error) {
 	return out, nil
 }
 
-func (c ImmuDBClient) GetCollectionCount(ledger, collection string) (int, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
+func (c ImmuDBClient) GetCollectionCount(ctx context.Context, ledger, collection string) (int, error) {
 	response, err := c.DoPostRequest(ctx, fmt.Sprintf("/ledger/%s/collection/%s/documents/count",
 		ledger,
 		collection),

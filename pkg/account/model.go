@@ -9,10 +9,10 @@ const (
 
 type Account struct {
 	// number is unique identifier of acc
-	Number  uint        `json:"number,omitempty"`
-	Name    string      `json:"name,omitempty"`
-	Iban    string      `json:"iban,omitempty"`
-	Address string      `json:"address,omitempty"`
-	Amount  uint        `json:"amount,omitempty"`
-	Type    AccountType `json:"type,omitempty"`
+	Number  uint        `json:"number"`
+	Name    string      `json:"name"`
+	Iban    string      `json:"iban"`
+	Address string      `json:"address"`
+	Amount  uint        `json:"amount"`
+	Type    AccountType `json:"type"`
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
 	"time"
@@ -15,6 +17,10 @@ import (
 	"go.uber.org/zap"
 )
 
+type MessageRespones struct {
+	Message string `json:"message,omitempty"`
+}
+
 func main() {
 	token := os.Getenv("API_PRIVATE_KEY")
 
@@ -23,18 +29,32 @@ func main() {
 	defer cancel()
 	err := manager.CreateAccountCollection(ctx)
 	if err != nil {
-		logger.Error("failed to create collection", zap.String("error", err.Error()))
+		logger.Error("failed to create collection",
+			zap.String("error", err.Error()))
 		panic(err)
 	}
-	logger.Info("Created account collection")
+	logger.Info("Initialized account manager")
+
+	if os.Getenv("ADD_TEST_DATA") == "true" {
+		for i := range 5 {
+			_ = manager.CreateAccount(ctx, account.Account{
+				Number:  uint(i),
+				Name:    "Foo Bar",
+				Iban:    "FOO12",
+				Address: "Foo street 10",
+				Amount:  100,
+				Type:    account.TypeSending,
+			})
+		}
+	}
 
 	e := echo.New()
-	g := e.Group("/api/v1/accounts")
+	g := e.Group("/api/v1/account")
 	// Middleware
 	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	// e.Use(middleware.Recover())
 
-	g.GET("/list", func(c echo.Context) error {
+	g.GET("", func(c echo.Context) error {
 		accounts, err := manager.GetAccounts(c.Request().Context())
 		if err != nil {
 			logger.Error("failed to get accounts",
@@ -42,14 +62,37 @@ func main() {
 			c.Response().Status = http.StatusInternalServerError
 
 			return c.JSON(http.StatusInternalServerError,
-				map[string]string{"error": "failed to list accounts"})
+				MessageRespones{"Failed to list accounts"})
 		}
 
 		return c.JSON(http.StatusOK, accounts)
 	})
 
-	g.POST("/add", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
+	g.POST("", func(c echo.Context) error {
+		acc := account.Account{}
+
+		decoder := json.NewDecoder(c.Request().Body)
+
+		if err := decoder.Decode(&acc); err != nil {
+			logger.Error("Failed to decode account", zap.Error(err))
+			return c.JSON(http.StatusInternalServerError,
+				MessageRespones{"Failed to decode account or missing data."})
+
+		}
+
+		err := manager.CreateAccount(c.Request().Context(), acc)
+		if err != nil {
+			if errors.Is(err, account.ErrAccountAlreadyExists) {
+				return c.JSON(http.StatusInternalServerError,
+					MessageRespones{err.Error()})
+			}
+			logger.Error("Failed to create new account",
+				zap.Error(err),
+				zap.Any("account", acc))
+			return c.NoContent(http.StatusInternalServerError)
+		}
+
+		return c.NoContent(http.StatusOK)
 	})
 
 	e.Logger.Fatal(e.Start(":1323"))

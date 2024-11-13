@@ -38,7 +38,7 @@ func NewAccountManager(ledger, collection, token string) AccountManager {
 
 // CreateAccountCollection creates new account collection if it does not exist
 func (am AccountManager) CreateAccountCollection(ctx context.Context) error {
-	names, err := am.client.ListCollectionsName(am.Ledger)
+	names, err := am.client.ListCollectionsName(ctx, am.Ledger)
 	if err != nil {
 		return errors.Wrap(err, "failed to list collections")
 	}
@@ -66,6 +66,8 @@ func (am AccountManager) CreateAccountCollection(ctx context.Context) error {
 			{"name": "type", "type": "STRING"},
 		},
 
+		// FIXME: Looks like db has some bug and uniqness does not always work
+		// should add custom check if number is not repeating ?
 		"indexes": []map[string]any{
 			{"fields": []string{"number"}, "isUnique": true},
 		},
@@ -94,6 +96,8 @@ func (am AccountManager) CreateAccountCollection(ctx context.Context) error {
 }
 
 func (am AccountManager) CreateAccount(ctx context.Context, acc Account) error {
+	// TODO: Add validation of empty fields that are required
+
 	jsonBytes, err := json.Marshal(acc)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal account")
@@ -144,7 +148,7 @@ func (am AccountManager) CreateAccount(ctx context.Context, acc Account) error {
 }
 
 func (am AccountManager) GetAccounts(ctx context.Context) ([]Account, error) {
-	count, err := am.client.GetCollectionCount(am.Ledger, am.Collection)
+	count, err := am.client.GetCollectionCount(ctx, am.Ledger, am.Collection)
 	if err != nil {
 		return nil, errors.Wrap(err, "get accounts failed to list collection")
 	}
