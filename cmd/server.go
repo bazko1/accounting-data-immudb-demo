@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -17,8 +18,10 @@ import (
 	"go.uber.org/zap"
 )
 
-type MessageRespones struct {
-	Message string `json:"message,omitempty"`
+type AccountResponse struct {
+	Accounts []account.Account `json:"accounts"`
+	Message  string            `json:"message,omitempty"`
+	Status   int               `json:"status,omitempty"`
 }
 
 func main() {
@@ -36,36 +39,49 @@ func main() {
 	logger.Info("Initialized account manager")
 
 	if os.Getenv("ADD_TEST_DATA") == "true" {
-		for i := range 5 {
+		for i := range 6 {
 			_ = manager.CreateAccount(ctx, account.Account{
 				Number:  uint(i),
-				Name:    "Foo Bar",
-				Iban:    "FOO12",
+				Name:    fmt.Sprintf("Foo Bar%d", i),
+				Iban:    fmt.Sprintf("US12%d", i),
 				Address: "Foo street 10",
-				Amount:  100,
+				Amount:  100 + uint(i),
 				Type:    account.TypeSending,
 			})
 		}
 	}
 
 	e := echo.New()
-	g := e.Group("/api/v1/account")
-	// Middleware
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:3000"},
+		AllowHeaders: []string{echo.HeaderAccessControlAllowOrigin},
+	}))
+
 	e.Use(middleware.Logger())
-	// e.Use(middleware.Recover())
+
+	g := e.Group("/api/v1/account")
 
 	g.GET("", func(c echo.Context) error {
 		accounts, err := manager.GetAccounts(c.Request().Context())
 		if err != nil {
 			logger.Error("failed to get accounts",
 				zap.Error(err))
-			c.Response().Status = http.StatusInternalServerError
 
 			return c.JSON(http.StatusInternalServerError,
-				MessageRespones{"Failed to list accounts"})
+				AccountResponse{
+					Message:  "Failed to list accounts",
+					Status:   http.StatusInternalServerError,
+					Accounts: []account.Account{},
+				},
+			)
 		}
 
-		return c.JSON(http.StatusOK, accounts)
+		return c.JSON(http.StatusOK, AccountResponse{
+			Message:  "OK",
+			Status:   http.StatusOK,
+			Accounts: accounts,
+		},
+		)
 	})
 
 	g.POST("", func(c echo.Context) error {
@@ -76,23 +92,35 @@ func main() {
 		if err := decoder.Decode(&acc); err != nil {
 			logger.Error("Failed to decode account", zap.Error(err))
 			return c.JSON(http.StatusInternalServerError,
-				MessageRespones{"Failed to decode account or missing data."})
-
+				AccountResponse{
+					Message: "Failed to decode account or missing data.",
+					Status:  http.StatusInternalServerError,
+				})
 		}
 
 		err := manager.CreateAccount(c.Request().Context(), acc)
 		if err != nil {
 			if errors.Is(err, account.ErrAccountAlreadyExists) {
 				return c.JSON(http.StatusInternalServerError,
-					MessageRespones{err.Error()})
+					AccountResponse{
+						Message: err.Error(),
+						Status:  http.StatusInternalServerError,
+					})
 			}
 			logger.Error("Failed to create new account",
 				zap.Error(err),
 				zap.Any("account", acc))
-			return c.NoContent(http.StatusInternalServerError)
+			return c.JSON(http.StatusInternalServerError, AccountResponse{
+				Message: "Failed to create new account",
+				Status:  http.StatusInternalServerError,
+			})
+
 		}
 
-		return c.NoContent(http.StatusOK)
+		return c.JSON(http.StatusOK, AccountResponse{
+			Message: "Failed to create new account",
+			Status:  http.StatusOK,
+		})
 	})
 
 	e.Logger.Fatal(e.Start(":1323"))
