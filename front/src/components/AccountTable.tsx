@@ -21,7 +21,7 @@ export function AccountTable({ accounts, message }: AccountTableProps) {
       <tbody>
         {
           message === "" ? accounts.map((acc: Account) => {
-            return (<tr>
+            return (<tr key={acc.number}>
               <th>{acc.number}</th>
               <th>{acc.name}</th>
               <th>{acc.iban}</th>
