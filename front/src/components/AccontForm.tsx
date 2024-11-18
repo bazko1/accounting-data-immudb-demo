@@ -18,6 +18,7 @@ export function AccountForm() {
           type: { value: AccountType }
         }
 
+        const errSendMsg = "Failed to send account data. Try again later."
 
         CreateAccount({
           // FIXME: This is pretty strange even though it is number it becomes string from form reading.
@@ -36,9 +37,14 @@ export function AccountForm() {
             // just reload hooks, but works ok.
             window.location.reload()
           } else {
-            setSendMessage("Failed to send account data. Try again later.")
+            setSendMessage(errSendMsg)
+            console.log(response.json())
           }
+        }).catch(err => {
+          console.log(err)
+          setSendMessage(errSendMsg)
         })
+
 
       }}
       >
