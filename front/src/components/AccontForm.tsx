@@ -1,10 +1,7 @@
-import React, { Dispatch, SetStateAction, useState } from 'react';
+import React, { useState } from 'react';
 import { CreateAccount } from '../api';
 import { AccountType } from "../model/account"
 
-export type AccountFormProps = {
-  defaultUniqueID: number
-};
 export function AccountForm() {
   const [sendMessage, setSendMessage] = useState("");
   return (
@@ -35,6 +32,9 @@ export function AccountForm() {
           setSendMessage("sending...")
           if (response.ok) {
             setSendMessage("")
+            // FIXME: I could reload the effect from main instead to
+            // just reload hooks, but works ok.
+            window.location.reload()
           } else {
             setSendMessage("Failed to send account data. Try again later.")
           }
@@ -43,7 +43,7 @@ export function AccountForm() {
       }}
       >
         <label> Unique number:
-          <input type="number" name="number" />
+          <input type="number" defaultValue="6" name="number" />
         </label ><br />
         <label> Name:
           <input type="text" defaultValue="Your Name" name="name" />

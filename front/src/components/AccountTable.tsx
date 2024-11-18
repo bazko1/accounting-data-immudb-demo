@@ -11,7 +11,7 @@ export function AccountTable({ accounts, message }: AccountTableProps) {
     <table>
       <thead>
         <tr>
-          <th>Number</th>
+          <th>Unique ID</th>
           <th>Name</th>
           <th>Iban</th>
           <th>Address</th>
