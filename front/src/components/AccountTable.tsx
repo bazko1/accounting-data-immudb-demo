@@ -1,4 +1,5 @@
 import { Accounts, Account } from "../model/account";
+import "./AccountTable.css"
 
 type AccountTableProps = {
   accounts: Accounts;
@@ -18,16 +19,16 @@ export function AccountTable({ accounts, message }: AccountTableProps) {
           <th>Type</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody >
         {
           message === "" ? accounts.map((acc: Account) => {
             return (<tr key={acc.number}>
-              <th>{acc.number}</th>
-              <th>{acc.name}</th>
-              <th>{acc.iban}</th>
-              <th>{acc.address}</th>
-              <th>{acc.amount}</th>
-              <th>{acc.type}</th>
+              <td>{acc.number}</td>
+              <td>{acc.name}</td>
+              <td>{acc.iban}</td>
+              <td>{acc.address}</td>
+              <td>{acc.amount}</td>
+              <td>{acc.type}</td>
             </tr>);
           }) : (<tr><td colSpan={6}>{message}</td></tr>)
         }

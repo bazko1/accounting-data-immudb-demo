@@ -8,7 +8,6 @@ import { AccountForm } from './components/AccontForm';
 function App() {
   const [accounts, setAccounts] = useState<Accounts>(Array<Account>());
   const [loadMessage, setMessage] = useState("");
-  const [inputAccount, setInputAccount] = useState<Accounts>(Array<Account>());
 
   const baseErrMsg = "Failed to load data, try again later."
 
@@ -37,9 +36,11 @@ function App() {
 
   return (
     <div className="App">
+      <h2>Accounts:</h2>
       <AccountTable accounts={accounts} message={loadMessage} />
-      <AccountForm setAccount={setInputAccount} />
-    </div>
+      <h2>Add new account data:</h2>
+      <AccountForm />
+    </div >
   );
 }
 

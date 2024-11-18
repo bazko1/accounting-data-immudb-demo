@@ -15,7 +15,7 @@ export interface Account {
 	type: AccountType
 }
 
-enum AccountType {
+export enum AccountType {
 	sending = "sending",
 	receiving = "receiving"
 }
