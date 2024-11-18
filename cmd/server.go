@@ -26,6 +26,7 @@ type AccountResponse struct {
 
 func main() {
 	token := os.Getenv("API_PRIVATE_KEY")
+	allowURL := os.Getenv("ALLOW_ORIGIN")
 
 	manager := account.NewAccountManager("default", "default", token)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -52,8 +53,12 @@ func main() {
 	}
 
 	e := echo.New()
+	allowOrigins := []string{"http://localhost:3000"}
+	if allowURL != "" {
+		allowOrigins = append(allowOrigins, allowURL)
+	}
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:3000"},
+		AllowOrigins: allowOrigins,
 		AllowHeaders: []string{echo.HeaderAccessControlAllowOrigin},
 	}))
 
