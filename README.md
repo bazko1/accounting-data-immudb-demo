@@ -7,7 +7,8 @@ with the following structure:
 account number (unique), account name, iban, address,
 amount, type (sending, receiving). <br/>
 It has an backend API to add and retrieve accounting information. <br/>
-It has a frontend that displays accounting information and allows to create new records.
+It has a frontend that displays accounting information and allows to create new records. <br/>
+Open `./screen.png` for frontend screnshot.
 
 ## Running
 Get API token for your `https://vault.immudb.io/docs/api/v1` <br/>
@@ -18,8 +19,10 @@ export API_PRIVATE_KEY="default.your.private-apiToken"
 ```
 Install docker and docker-compose and run
 ```sh
-docker compose up
+docker-compose up
 ```
+You can now access frontend page at http://localhost:3000  <br/>
+You can play with backend via http://localhost:1323.
 
 ## API 
 Backend server exposes following two endpoints: <br/>
@@ -51,6 +54,7 @@ If `default` collection does not exist it will be created by backend on startup.
 ## Developing
 ### Backend:
 Import key and run standalone backend with test data creation:
+Currently server runs at 1323 port by default. 
 ```sh
 . .env
 ADD_TEST_DATA=true go run cmd/server.go 
